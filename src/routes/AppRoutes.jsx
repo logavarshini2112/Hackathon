@@ -9,9 +9,10 @@ import StaffLogin from '../pages/staff/StaffLogin';
 import AdminLogin from '../pages/admin/AdminLogin';
 
 import VisitorDashboard from '../pages/visitor/VisitorDashboard';
+import StaffDashboard from '../pages/staff/StaffDashboard';
 
 /**
- * Dashboard Coming Soon Placeholder Component (Staff & Admin)
+ * Dashboard Coming Soon Placeholder Component (Admin)
  */
 function DashboardPlaceholder({ title, badge }) {
   const navigate = useNavigate();
@@ -52,14 +53,11 @@ export default function AppRoutes() {
         <Route path="/staff/login" element={<StaffLogin />} />
         <Route path="/admin/login" element={<AdminLogin />} />
 
-        {/* Complete Visitor Dashboard */}
+        {/* Complete Dashboards */}
         <Route path="/visitor/dashboard" element={<VisitorDashboard />} />
+        <Route path="/staff/dashboard" element={<StaffDashboard />} />
 
-        {/* Staff & Admin Dashboard Placeholders */}
-        <Route
-          path="/staff/dashboard"
-          element={<DashboardPlaceholder title="Staff Dashboard" badge="Staff Portal" />}
-        />
+        {/* Admin Dashboard Placeholder */}
         <Route
           path="/admin/dashboard"
           element={<DashboardPlaceholder title="Administrator Dashboard" badge="Admin Controls" />}
