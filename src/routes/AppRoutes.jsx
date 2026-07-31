@@ -1,19 +1,23 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+
 import LandingPage from '../pages/visitor/LandingPage';
 import RoleSelection from '../pages/RoleSelection';
+
 import VisitorLogin from '../pages/visitor/VisitorLogin';
 import StaffLogin from '../pages/staff/StaffLogin';
 import AdminLogin from '../pages/admin/AdminLogin';
 
+import VisitorDashboard from '../pages/visitor/VisitorDashboard';
+
 /**
- * Dashboard Coming Soon Placeholder Component
+ * Dashboard Coming Soon Placeholder Component (Staff & Admin)
  */
 function DashboardPlaceholder({ title, badge }) {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-slate-800">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-slate-800 font-sans">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-slate-200 text-center space-y-4">
         <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-100">
           {badge}
@@ -48,11 +52,10 @@ export default function AppRoutes() {
         <Route path="/staff/login" element={<StaffLogin />} />
         <Route path="/admin/login" element={<AdminLogin />} />
 
-        {/* Dashboard Placeholder Routes */}
-        <Route
-          path="/visitor/dashboard"
-          element={<DashboardPlaceholder title="Visitor Dashboard" badge="Visitor Portal" />}
-        />
+        {/* Complete Visitor Dashboard */}
+        <Route path="/visitor/dashboard" element={<VisitorDashboard />} />
+
+        {/* Staff & Admin Dashboard Placeholders */}
         <Route
           path="/staff/dashboard"
           element={<DashboardPlaceholder title="Staff Dashboard" badge="Staff Portal" />}
