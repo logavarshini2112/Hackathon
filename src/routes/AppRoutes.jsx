@@ -1,56 +1,46 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import LandingPage from '../pages/visitor/LandingPage';
 
 /**
- * Main Application Routes Configuration
- * 
- * Modular route layout pre-configured for future module extensions:
- * - Visitor Portal (`/`, `/visitor/*`)
- * - Staff Portal (`/staff/*`)
- * - Admin Portal (`/admin/*`)
+ * Role Selection Route Placeholder
+ * Pre-configured for navigation from Login buttons
  */
+function RoleSelectionPlaceholder() {
+  const navigate = useNavigate();
 
-export const VISITOR_ROUTES = {
-  HOME: '/',
-  FEEDBACK: '/visitor/feedback',
-};
-
-export const STAFF_ROUTES = {
-  HOME: '/staff',
-};
-
-export const ADMIN_ROUTES = {
-  HOME: '/admin',
-};
+  return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-slate-800">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 border border-slate-200 text-center space-y-4">
+        <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto text-xl font-bold">
+          ➔
+        </div>
+        <h2 className="text-2xl font-bold text-slate-900">Role Selection</h2>
+        <p className="text-sm text-slate-600">
+          You navigated to <code className="bg-slate-100 px-2 py-1 rounded text-blue-600 font-mono">/role-selection</code>. This route is configured and ready for future Role Selection page implementation.
+        </p>
+        <button
+          onClick={() => navigate('/')}
+          className="inline-block px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm transition-all cursor-pointer shadow-md"
+        >
+          Return to Landing Page
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Visitor Portal Routes Placeholder */}
-        <Route
-          path="/"
-          element={
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-slate-800">
-              <div className="max-w-md w-full bg-white rounded-xl shadow-md p-8 border border-slate-100 text-center">
-                <h1 className="text-xl font-semibold text-slate-900 mb-2">
-                  Digital Visitor Feedback &amp; Experience Management Portal
-                </h1>
-                <p className="text-sm text-slate-500">
-                  Project setup complete. Ready for future page and module development.
-                </p>
-              </div>
-            </div>
-          }
-        />
+        {/* Landing Page Route */}
+        <Route path="/" element={<LandingPage />} />
 
-        {/* Staff Portal Routes Placeholder */}
-        {/* <Route path="/staff/*" element={<StaffRoutes />} /> */}
+        {/* Role Selection Target Route */}
+        <Route path="/role-selection" element={<RoleSelectionPlaceholder />} />
 
-        {/* Admin Portal Routes Placeholder */}
-        {/* <Route path="/admin/*" element={<AdminRoutes />} /> */}
-
-        {/* Fallback Catch-all Route */}
+        {/* Fallback Route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
