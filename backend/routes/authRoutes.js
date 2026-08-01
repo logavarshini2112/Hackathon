@@ -4,8 +4,11 @@ import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.post('/login', loginUser);
+// Public routes
 router.post('/register', registerVisitor);
+router.post('/login', loginUser);
+
+// Protected routes
 router.get('/profile', protect, getUserProfile);
 
 export default router;

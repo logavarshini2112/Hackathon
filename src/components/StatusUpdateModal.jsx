@@ -11,7 +11,9 @@ export default function StatusUpdateModal({ record, onClose, onUpdateSuccess }) 
 
   const statusOptions = ['Open', 'In Progress', 'Resolved', 'Declined'];
 
-  const handleSubmit = (e) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (selectedStatus === 'Declined' && !declineReason.trim()) {
@@ -20,26 +22,47 @@ export default function StatusUpdateModal({ record, onClose, onUpdateSuccess }) 
     }
 
     setError('');
+    setIsSubmitting(true);
 
-    // Determine escalation status automatically based on status or daysPending
-    let escalationStatus = record.escalationStatus;
-    if (selectedStatus === 'Escalated to Administrator' || record.daysPending >= 10) {
-      escalationStatus = 'Escalated';
-      setShowAdminNotice(true);
-    } else if (record.daysPending >= 8) {
-      escalationStatus = 'Warning';
-    } else {
-      escalationStatus = 'Normal';
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Authentication session expired. Please log in as Staff.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      const response = await fetch(`http://localhost:5000/api/staff/update-status/${record.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          status: selectedStatus,
+          declineReason: selectedStatus === 'Declined' ? declineReason.trim() : null,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to update ticket status.');
+      }
+
+      const updatedRecord = {
+        ...record,
+        status: data.status,
+        declineReason: data.decline_reason || data.declineReason,
+        escalationStatus: data.escalation_status || data.escalationStatus || record.escalationStatus,
+      };
+
+      setIsSubmitting(false);
+      onUpdateSuccess(updatedRecord);
+    } catch (err) {
+      setIsSubmitting(false);
+      setError(err.message || 'Server connection error.');
     }
-
-    const updatedRecord = {
-      ...record,
-      status: selectedStatus,
-      declineReason: selectedStatus === 'Declined' ? declineReason : null,
-      escalationStatus,
-    };
-
-    onUpdateSuccess(updatedRecord);
   };
 
   return (
@@ -142,9 +165,10 @@ export default function StatusUpdateModal({ record, onClose, onUpdateSuccess }) 
 
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-md transition-all active:scale-95 cursor-pointer"
+              disabled={isSubmitting}
+              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-md transition-all active:scale-95 disabled:opacity-70 cursor-pointer"
             >
-              Update Status
+              {isSubmitting ? 'Updating...' : 'Update Status'}
             </button>
           </div>
 

@@ -117,6 +117,25 @@ export default function AdminDashboard() {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
+  // Handle New Staff Account Created by Admin
+  const handleStaffCreated = (newStaff) => {
+    const formattedStaff = {
+      id: newStaff.id,
+      staffName: newStaff.staffName,
+      staffId: newStaff.staffId,
+      department: newStaff.department,
+      assignedCount: 0,
+      pendingCount: 0,
+      resolvedCount: 0,
+      avgResponseTime: '0 hrs',
+      performanceScore: '100%',
+      status: newStaff.status || 'Active',
+      email: newStaff.email,
+    };
+    setStaffList((prev) => [formattedStaff, ...prev]);
+    showToast(`Account created successfully for ${newStaff.staffName} (${newStaff.role}).`);
+  };
+
   // Computed Dynamic Stats
   const computedStats = {
     totalFeedback: feedbackRecords.length,
@@ -301,6 +320,7 @@ export default function AdminDashboard() {
               staffList={staffList}
               onToggleStaffStatus={handleToggleStaffStatus}
               onResetPassword={handleResetStaffPassword}
+              onStaffCreated={handleStaffCreated}
             />
           </section>
 
@@ -416,6 +436,8 @@ export default function AdminDashboard() {
               <button
                 onClick={() => {
                   setIsLogoutModalOpen(false);
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('user');
                   navigate('/');
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-xs shadow-md transition-colors cursor-pointer"

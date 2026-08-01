@@ -10,6 +10,7 @@ export default function AdminLogin() {
       icon={ShieldCheck}
       badgeText="Admin Controls"
       destinationDashboard="/admin/dashboard"
+      allowRegister={false}
     />
   );
 }

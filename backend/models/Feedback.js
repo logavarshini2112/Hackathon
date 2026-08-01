@@ -24,6 +24,11 @@ export default class FeedbackModel {
     return rows;
   }
 
+  static async findByAssignedStaff(staffName) {
+    const [rows] = await pool.execute('SELECT * FROM feedback WHERE assigned_staff = ? ORDER BY created_at DESC', [staffName]);
+    return rows;
+  }
+
   static async getAll() {
     const [rows] = await pool.execute('SELECT * FROM feedback ORDER BY created_at DESC');
     return rows;

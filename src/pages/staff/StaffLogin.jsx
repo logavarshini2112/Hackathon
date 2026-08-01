@@ -10,6 +10,7 @@ export default function StaffLogin() {
       icon={UserCheck}
       badgeText="Staff Portal"
       destinationDashboard="/staff/dashboard"
+      allowRegister={false}
     />
   );
 }

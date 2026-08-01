@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   ClipboardList, 
@@ -30,7 +30,6 @@ import StaffProfileCard from '../../components/StaffProfileCard';
 import {
   initialStaffProfile,
   initialStaffNotifications,
-  initialAssignedFeedback,
 } from '../../data/staffDummyData';
 
 export default function StaffDashboard() {
@@ -39,9 +38,32 @@ export default function StaffDashboard() {
   // State
   const [activeSection, setActiveSection] = useState('dashboard');
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [profile] = useState(initialStaffProfile);
+
+  // Load user profile from localStorage if available
+  const storedUserJson = localStorage.getItem('user');
+  let loadedProfile = initialStaffProfile;
+  if (storedUserJson) {
+    try {
+      const u = JSON.parse(storedUserJson);
+      loadedProfile = {
+        staffName: u.name || initialStaffProfile.staffName,
+        staffId: u.userIdCode || u.user_id_code || initialStaffProfile.staffId,
+        department: u.department || initialStaffProfile.department,
+        role: u.role || 'Staff Member',
+        email: u.email || initialStaffProfile.email,
+        phone: u.phone || '+91-9876543210',
+        joinedDate: 'August 2026',
+        performanceScore: '96%',
+        avgResponseTime: '3.5 Hours',
+      };
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  const [profile, setProfile] = useState(loadedProfile);
   const [notifications, setNotifications] = useState(initialStaffNotifications);
-  const [assignedFeedback, setAssignedFeedback] = useState(initialAssignedFeedback);
+  const [assignedFeedback, setAssignedFeedback] = useState([]);
 
   // Modals state
   const [inspectRecord, setInspectRecord] = useState(null);
@@ -56,6 +78,51 @@ export default function StaffDashboard() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
   };
+
+  // Fetch assigned feedback records from backend API on mount
+  useEffect(() => {
+    const fetchAssignedFeedback = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await fetch('http://localhost:5000/api/staff/assigned-feedback', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data)) {
+            const mappedRecords = data.map((item) => ({
+              id: item.id,
+              referenceId: item.reference_id || item.referenceId,
+              visitorName: item.visitor_name || item.visitorName || 'Anonymous Visitor',
+              department: item.department,
+              feedbackType: item.feedback_type || item.feedbackType,
+              subject: item.subject,
+              description: item.description,
+              priority: item.priority || 'Medium',
+              submissionDate: item.created_at ? item.created_at.split('T')[0] : (item.incident_date ? item.incident_date.split('T')[0] : ''),
+              incidentDate: item.incident_date ? item.incident_date.split('T')[0] : '',
+              status: item.status || 'Open',
+              escalationStatus: item.escalation_status || item.escalationStatus || 'Normal',
+              daysPending: item.days_pending !== undefined ? item.days_pending : 0,
+              declineReason: item.decline_reason || item.declineReason || null,
+              assignedStaff: item.assigned_staff || item.assignedStaff,
+              image: item.image_url ? `http://localhost:5000${item.image_url}` : null,
+            }));
+            setAssignedFeedback(mappedRecords);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching assigned feedback records:', err);
+      }
+    };
+
+    fetchAssignedFeedback();
+  }, []);
 
   // Status Update Handler
   const handleUpdateSuccess = (updatedRecord) => {
@@ -436,6 +503,8 @@ export default function StaffDashboard() {
               <button
                 onClick={() => {
                   setIsLogoutModalOpen(false);
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('user');
                   navigate('/');
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-xs shadow-md transition-colors cursor-pointer"

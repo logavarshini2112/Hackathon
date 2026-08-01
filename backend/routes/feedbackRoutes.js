@@ -5,7 +5,7 @@ import upload from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
 
-router.post('/', protect, authorize('Visitor', 'Administrator'), upload.single('image'), createFeedback);
-router.get('/my-feedback', protect, authorize('Visitor', 'Administrator'), getMyFeedback);
+router.post('/', protect, authorize('Visitor'), upload.single('image'), createFeedback);
+router.get('/my-feedback', protect, authorize('Visitor'), getMyFeedback);
 
 export default router;

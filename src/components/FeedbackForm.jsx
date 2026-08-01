@@ -49,46 +49,90 @@ export default function FeedbackForm({ onFeedbackSubmitted }) {
     return Object.keys(newErrors).length === 0;
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+
   const handleReset = () => {
     setFormData(initialFormState);
     setImageFile(null);
     setImageError(null);
     setErrors({});
+    setSubmitError(null);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError(null);
+
     if (!validate()) return;
 
-    // Generate reference ID: e.g., FB-2026-0007
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const newRefId = `FB-2026-${randomNum}`;
+    setIsSubmitting(true);
 
-    const newRecord = {
-      id: `fb-${Date.now()}`,
-      referenceId: newRefId,
-      department: formData.department,
-      feedbackType: formData.feedbackType,
-      subject: formData.subject,
-      description: formData.description,
-      priority: formData.priority,
-      date: formData.incidentDate,
-      status: 'Open',
-      estimatedResponse: '48 Hours',
-      image: imageFile ? imageFile.previewUrl : null,
-    };
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setSubmitError('Authentication token missing. Please sign in as a Visitor.');
+        setIsSubmitting(false);
+        return;
+      }
 
-    // Show Confirmation Card modal
-    setConfirmationData(newRecord);
+      const payloadData = new FormData();
+      payloadData.append('department', formData.department);
+      payloadData.append('feedbackType', formData.feedbackType);
+      payloadData.append('subject', formData.subject.trim());
+      payloadData.append('description', formData.description.trim());
+      payloadData.append('priority', formData.priority);
+      payloadData.append('incidentDate', formData.incidentDate);
 
-    // Pass up to parent dashboard state
-    onFeedbackSubmitted(newRecord);
+      if (imageFile && imageFile.file) {
+        payloadData.append('image', imageFile.file);
+      }
 
-    // Reset Form
-    setFormData(initialFormState);
-    setImageFile(null);
-    setImageError(null);
-    setErrors({});
+      const response = await fetch('http://localhost:5000/api/feedback', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: payloadData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to submit feedback ticket.');
+      }
+
+      const newRecord = {
+        id: data.id,
+        referenceId: data.reference_id || data.referenceId,
+        department: data.department,
+        feedbackType: data.feedback_type || data.feedbackType,
+        subject: data.subject,
+        description: data.description,
+        priority: data.priority,
+        date: data.incident_date ? data.incident_date.split('T')[0] : formData.incidentDate,
+        status: data.status || 'Open',
+        estimatedResponse: '48 Hours',
+        image: data.image_url ? `http://localhost:5000${data.image_url}` : (imageFile ? imageFile.previewUrl : null),
+        assignedStaff: data.assigned_staff || 'Unassigned',
+      };
+
+      // Show Confirmation Card modal
+      setConfirmationData(newRecord);
+
+      // Pass up to parent dashboard state
+      if (onFeedbackSubmitted) onFeedbackSubmitted(newRecord);
+
+      // Reset Form
+      setFormData(initialFormState);
+      setImageFile(null);
+      setImageError(null);
+      setErrors({});
+      setIsSubmitting(false);
+    } catch (err) {
+      setIsSubmitting(false);
+      setSubmitError(err.message || 'Server connection error. Please ensure backend is running.');
+    }
   };
 
   return (
@@ -104,6 +148,17 @@ export default function FeedbackForm({ onFeedbackSubmitted }) {
           Fill in the details below to log a new inquiry, complaint, or appreciation ticket.
         </p>
       </div>
+
+      {/* Backend API Error Banner */}
+      {submitError && (
+        <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-start gap-2.5 animate-fadeIn">
+          <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <span className="font-semibold block mb-0.5">Submission Error</span>
+            <span>{submitError}</span>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6" noValidate>
         
@@ -303,10 +358,20 @@ export default function FeedbackForm({ onFeedbackSubmitted }) {
 
           <button
             type="submit"
-            className="inline-flex items-center gap-2 px-7 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-md shadow-blue-600/25 transition-all duration-200 active:scale-95 cursor-pointer"
+            disabled={isSubmitting}
+            className="inline-flex items-center gap-2 px-7 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-md shadow-blue-600/25 transition-all duration-200 active:scale-95 disabled:opacity-70 cursor-pointer"
           >
-            <Send className="w-4 h-4" />
-            <span>Submit Feedback</span>
+            {isSubmitting ? (
+              <>
+                <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Submitting...</span>
+              </>
+            ) : (
+              <>
+                <Send className="w-4 h-4" />
+                <span>Submit Feedback</span>
+              </>
+            )}
           </button>
         </div>
 

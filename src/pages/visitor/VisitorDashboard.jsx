@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FileText, 
@@ -36,11 +36,73 @@ export default function VisitorDashboard() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [stats, setStats] = useState(initialVisitorStats);
-  const [profile] = useState(initialVisitorProfile);
+
+  // Load user profile from localStorage if available
+  const storedUserJson = localStorage.getItem('user');
+  let loadedProfile = initialVisitorProfile;
+  if (storedUserJson) {
+    try {
+      const u = JSON.parse(storedUserJson);
+      loadedProfile = {
+        name: u.name || initialVisitorProfile.name,
+        visitorId: u.userIdCode || u.user_id_code || initialVisitorProfile.visitorId,
+        email: u.email || initialVisitorProfile.email,
+        phone: u.phone || initialVisitorProfile.phone,
+        organization: u.department || 'Visitor Portal',
+        joinedDate: 'August 2026',
+        totalSubmitted: initialVisitorProfile.totalSubmitted,
+      };
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  const [profile, setProfile] = useState(loadedProfile);
   const [notifications, setNotifications] = useState(initialNotifications);
   const [feedbackRecords, setFeedbackRecords] = useState(initialFeedbackRecords);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
+  // Fetch real visitor feedback records from MySQL API on mount
+  useEffect(() => {
+    const fetchMyFeedback = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await fetch('http://localhost:5000/api/feedback/my-feedback', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const mappedRecords = data.map((item) => ({
+              id: item.id,
+              referenceId: item.reference_id || item.referenceId,
+              department: item.department,
+              feedbackType: item.feedback_type || item.feedbackType,
+              subject: item.subject,
+              description: item.description,
+              priority: item.priority,
+              date: item.incident_date ? item.incident_date.split('T')[0] : '',
+              status: item.status,
+              estimatedResponse: '48 Hours',
+              image: item.image_url ? `http://localhost:5000${item.image_url}` : null,
+              assignedStaff: item.assigned_staff || 'Unassigned',
+            }));
+            setFeedbackRecords(mappedRecords);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching visitor feedback records:', err);
+      }
+    };
+
+    fetchMyFeedback();
+  }, []);
 
   // Handle Feedback Submission Event
   const handleFeedbackSubmitted = (newRecord) => {
@@ -264,6 +326,8 @@ export default function VisitorDashboard() {
               <button
                 onClick={() => {
                   setIsLogoutModalOpen(false);
+                  localStorage.removeItem('token');
+                  localStorage.removeItem('user');
                   navigate('/');
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-xs shadow-md transition-colors cursor-pointer"

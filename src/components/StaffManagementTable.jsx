@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Users, Search, Key, UserX, UserCheck, Shield, Info, X } from 'lucide-react';
+import { Users, Search, Key, UserX, UserCheck, Shield, Info, X, UserPlus } from 'lucide-react';
+import AddStaffModal from './AddStaffModal';
 
-export default function StaffManagementTable({ staffList, onToggleStaffStatus, onResetPassword }) {
+export default function StaffManagementTable({ staffList, onToggleStaffStatus, onResetPassword, onStaffCreated }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
   const [selectedStaffDetails, setSelectedStaffDetails] = useState(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const filteredStaff = staffList.filter((stf) => {
     const matchesSearch =
@@ -35,6 +37,14 @@ export default function StaffManagementTable({ staffList, onToggleStaffStatus, o
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors cursor-pointer shrink-0"
+          >
+            <UserPlus className="w-4 h-4" />
+            <span>Add Staff Member</span>
+          </button>
+
           <div className="relative w-full sm:w-64">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
               <Search className="w-4 h-4" />
@@ -174,6 +184,16 @@ export default function StaffManagementTable({ staffList, onToggleStaffStatus, o
             </button>
           </div>
         </div>
+      )}
+
+      {/* Add Staff Modal */}
+      {isAddModalOpen && (
+        <AddStaffModal
+          onClose={() => setIsAddModalOpen(false)}
+          onStaffCreated={(newStaff) => {
+            if (onStaffCreated) onStaffCreated(newStaff);
+          }}
+        />
       )}
 
     </div>

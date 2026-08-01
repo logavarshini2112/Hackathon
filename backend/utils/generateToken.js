@@ -5,6 +5,9 @@ dotenv.config();
 
 /**
  * Generate JWT Authentication Token
+ * @param {number|string} userId - User's database primary key ID
+ * @param {string} role - User role (e.g., 'Visitor', 'Staff', 'Administrator')
+ * @returns {string} JWT Token
  */
 export default function generateToken(userId, role) {
   return jwt.sign(
