@@ -20,6 +20,7 @@ export default class FeedbackModel {
   }
 
   static async findByVisitorId(visitorId) {
+    if (!visitorId) return [];
     const [rows] = await pool.execute('SELECT * FROM feedback WHERE visitor_id = ? ORDER BY created_at DESC', [visitorId]);
     return rows;
   }

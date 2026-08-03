@@ -47,9 +47,13 @@ export async function createFeedback(req, res) {
  */
 export async function getMyFeedback(req, res) {
   try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: 'Not authorized, visitor user missing or unauthenticated' });
+    }
+
     const records = await FeedbackModel.findByVisitorId(req.user.id);
     res.json(records);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: error.message || 'Failed to retrieve visitor feedback' });
   }
 }

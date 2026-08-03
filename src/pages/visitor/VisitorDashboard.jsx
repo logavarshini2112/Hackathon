@@ -24,7 +24,6 @@ import {
   initialVisitorStats,
   initialVisitorProfile,
   initialNotifications,
-  initialFeedbackRecords,
 } from '../../data/visitorDummyData';
 
 export default function VisitorDashboard() {
@@ -57,7 +56,7 @@ export default function VisitorDashboard() {
 
   const [profile, setProfile] = useState(loadedProfile);
   const [notifications, setNotifications] = useState(initialNotifications);
-  const [feedbackRecords, setFeedbackRecords] = useState(initialFeedbackRecords);
+  const [feedbackRecords, setFeedbackRecords] = useState([]);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
@@ -66,7 +65,10 @@ export default function VisitorDashboard() {
     const fetchMyFeedback = async () => {
       try {
         const token = localStorage.getItem('token');
-        if (!token) return;
+        if (!token) {
+          setFeedbackRecords([]);
+          return;
+        }
 
         const response = await fetch('http://localhost:5000/api/feedback/my-feedback', {
           headers: {
@@ -76,7 +78,7 @@ export default function VisitorDashboard() {
 
         if (response.ok) {
           const data = await response.json();
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data)) {
             const mappedRecords = data.map((item) => ({
               id: item.id,
               referenceId: item.reference_id || item.referenceId,
@@ -85,17 +87,25 @@ export default function VisitorDashboard() {
               subject: item.subject,
               description: item.description,
               priority: item.priority,
-              date: item.incident_date ? item.incident_date.split('T')[0] : '',
+              date: item.incident_date ? item.incident_date.split('T')[0] : (item.created_at ? item.created_at.split('T')[0] : ''),
               status: item.status,
               estimatedResponse: '48 Hours',
-              image: item.image_url ? `http://localhost:5000${item.image_url}` : null,
+              image: item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `http://localhost:5000${item.image_url}`) : null,
               assignedStaff: item.assigned_staff || 'Unassigned',
+              createdAt: item.created_at,
+              updatedAt: item.updated_at,
+              declineReason: item.decline_reason,
             }));
             setFeedbackRecords(mappedRecords);
+          } else {
+            setFeedbackRecords([]);
           }
+        } else {
+          setFeedbackRecords([]);
         }
       } catch (err) {
         console.error('Error fetching visitor feedback records:', err);
+        setFeedbackRecords([]);
       }
     };
 
