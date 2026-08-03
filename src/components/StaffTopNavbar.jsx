@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Menu, Search, Bell, User, LogOut, ChevronDown } from 'lucide-react';
+import { Menu, Bell, LogOut, ChevronDown } from 'lucide-react';
 
-export default function StaffTopNavbar({ profile, unreadCount, onNotificationClick, onProfileClick, onLogoutClick, setIsMobileOpen }) {
+export default function StaffTopNavbar({ profile, unreadCount, onNotificationClick, onLogoutClick, setIsMobileOpen }) {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   return (
@@ -24,20 +24,6 @@ export default function StaffTopNavbar({ profile, unreadCount, onNotificationCli
           <span className="text-xs text-slate-500 hidden sm:inline">
             Staff Operations Management
           </span>
-        </div>
-      </div>
-
-      {/* Center: Search Input UI */}
-      <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
-        <div className="relative w-full">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-            <Search className="w-4 h-4" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search tickets by ID, visitor name, subject..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-100/80 border border-slate-200/80 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
-          />
         </div>
       </div>
 
@@ -64,11 +50,6 @@ export default function StaffTopNavbar({ profile, unreadCount, onNotificationCli
             onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
             className="flex items-center gap-2.5 p-1.5 rounded-xl hover:bg-slate-100 transition-colors cursor-pointer"
           >
-            <img
-              src={profile.avatarUrl}
-              alt={profile.name}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border-2 border-blue-600/30"
-            />
             <div className="hidden sm:flex flex-col text-left">
               <span className="text-xs font-bold text-slate-900 leading-tight">
                 {profile.name}
@@ -87,17 +68,6 @@ export default function StaffTopNavbar({ profile, unreadCount, onNotificationCli
                 <p className="text-xs font-bold text-slate-900">{profile.name}</p>
                 <p className="text-[10px] text-slate-500">{profile.department} Staff</p>
               </div>
-
-              <button
-                onClick={() => {
-                  setProfileDropdownOpen(false);
-                  onProfileClick();
-                }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-              >
-                <User className="w-4 h-4" />
-                <span>My Profile</span>
-              </button>
 
               <button
                 onClick={() => {

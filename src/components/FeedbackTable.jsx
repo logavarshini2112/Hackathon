@@ -24,11 +24,25 @@ export default function FeedbackTable({ records, onViewDetails }) {
 
   // Filtering Logic
   const filteredRecords = useMemo(() => {
+    const term = searchTerm.toLowerCase().trim();
     return records.filter((item) => {
-      const matchesSearch =
-        item.referenceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const refId = (item.referenceId || '').toLowerCase();
+      const subject = (item.subject || '').toLowerCase();
+      const department = (item.department || '').toLowerCase();
+      const feedbackType = (item.feedbackType || '').toLowerCase();
+      const status = (item.status || '').toLowerCase();
+      const assignedStaff = (item.assignedStaff || '').toLowerCase();
+      const description = (item.description || '').toLowerCase();
+
+      const matchesSearch = !term || (
+        refId.includes(term) ||
+        subject.includes(term) ||
+        department.includes(term) ||
+        feedbackType.includes(term) ||
+        status.includes(term) ||
+        assignedStaff.includes(term) ||
+        description.includes(term)
+      );
 
       const matchesDept = departmentFilter ? item.department === departmentFilter : true;
       const matchesStatus = statusFilter ? item.status === statusFilter : true;
@@ -89,7 +103,7 @@ export default function FeedbackTable({ records, onViewDetails }) {
         </div>
 
         {/* Search Bar */}
-        <div className="relative w-full md:w-72">
+        <div className="relative w-full md:w-80">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
             <Search className="w-4 h-4" />
           </div>
@@ -100,7 +114,7 @@ export default function FeedbackTable({ records, onViewDetails }) {
               setSearchTerm(e.target.value);
               setCurrentPage(1);
             }}
-            placeholder="Search by ID or title..."
+            placeholder="Search by ID, subject, dept, type, status, staff..."
             className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600"
           />
         </div>

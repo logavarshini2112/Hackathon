@@ -56,7 +56,7 @@ export default function AddStaffModal({ onClose, onStaffCreated }) {
           password,
           department,
           phone: phone.trim(),
-          role,
+          role: 'Staff',
         }),
       });
 
@@ -184,12 +184,11 @@ export default function AddStaffModal({ onClose, onStaffCreated }) {
             <div className="space-y-1">
               <label className="block text-xs font-semibold text-slate-700">Account Role</label>
               <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-blue-600 bg-white"
+                value="Staff"
+                disabled
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none bg-slate-50 text-slate-700 font-semibold cursor-not-allowed"
               >
                 <option value="Staff">Staff</option>
-                <option value="Administrator">Administrator</option>
               </select>
             </div>
           </div>

@@ -122,22 +122,32 @@ export default function FeedbackDetailsModal({ record, onClose }) {
         {/* Image Attachment Preview if present */}
         {record.image && (
           <div className="space-y-2">
-            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-              <ImageIcon className="w-4 h-4 text-blue-600" />
-              <span>Attached Image Proof</span>
-            </h4>
-            <div className="rounded-xl overflow-hidden border border-slate-200 max-h-56">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <ImageIcon className="w-4 h-4 text-blue-600" />
+                <span>Attached Image Proof</span>
+              </h4>
+              <a
+                href={record.image}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-800 underline"
+              >
+                View Full Size
+              </a>
+            </div>
+            <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-900/5 p-2 flex items-center justify-center">
               <img
                 src={record.image}
                 alt="Attachment Preview"
-                className="w-full h-full object-cover"
+                className="max-h-96 w-auto max-w-full object-contain rounded-lg shadow-xs"
               />
             </div>
           </div>
         )}
 
         {/* Embedded Status Timeline */}
-        <StatusTimeline currentStatus={record.status} />
+        <StatusTimeline record={record} currentStatus={record.status} />
 
         {/* Action Button */}
         <div className="pt-2">

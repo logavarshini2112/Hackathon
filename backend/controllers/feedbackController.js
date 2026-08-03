@@ -1,4 +1,5 @@
 import FeedbackModel from '../models/Feedback.js';
+import UserModel from '../models/User.js';
 
 /**
  * @desc    Submit new visitor feedback
@@ -15,6 +16,11 @@ export async function createFeedback(req, res) {
 
     const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
+    // Automatic Department-Based Staff Assignment Logic
+    // Finds active Staff member belonging to the selected department
+    const activeStaff = await UserModel.findStaffByDepartment(department);
+    const assignedStaff = activeStaff ? activeStaff.name : 'Unassigned';
+
     const feedback = await FeedbackModel.create({
       visitorId: req.user ? req.user.id : null,
       visitorName: req.user ? req.user.name : 'Anonymous Visitor',
@@ -25,6 +31,7 @@ export async function createFeedback(req, res) {
       priority: priority || 'Medium',
       incidentDate: incidentDate || new Date().toISOString().split('T')[0],
       imageUrl,
+      assignedStaff,
     });
 
     res.status(201).json(feedback);

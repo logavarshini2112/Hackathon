@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   FileText, 
@@ -31,14 +31,9 @@ import AdminProfileCard from '../../components/AdminProfileCard';
 import AssignStaffModal from '../../components/AssignStaffModal';
 import FeedbackDetailsModal from '../../components/FeedbackDetailsModal';
 
-import {
-  initialAdminProfile,
-  initialAdminStats,
-  initialStaffList,
-  initialAdminFeedbackRecords,
-  initialAdminNotifications,
-  initialAdminSettings,
-} from '../../data/adminDummyData';
+import { initialAdminSettings } from '../../data/adminDummyData';
+
+import { applyTheme } from '../../utils/theme';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -47,12 +42,23 @@ export default function AdminDashboard() {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const [profile] = useState(initialAdminProfile);
-  const [stats, setStats] = useState(initialAdminStats);
-  const [staffList, setStaffList] = useState(initialStaffList);
-  const [feedbackRecords, setFeedbackRecords] = useState(initialAdminFeedbackRecords);
-  const [notifications, setNotifications] = useState(initialAdminNotifications);
+  const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const [profile, setProfile] = useState({
+    name: storedUser.name || 'System Administrator',
+    adminId: storedUser.user_id_code || 'ADM-2026-0001',
+    email: storedUser.email || 'admin@visitorportal.com',
+    role: storedUser.role || 'Administrator',
+    phone: storedUser.phone || '+91-9876543210',
+    supportEmail: 'support@visitorportal.com',
+    supportPhone: '+91-9876543210',
+    joinDate: 'January 2026',
+    avatarUrl: storedUser.avatar_url ? `http://localhost:5000${storedUser.avatar_url}` : null,
+  });
+
+  const [staffList, setStaffList] = useState([]);
+  const [feedbackRecords, setFeedbackRecords] = useState([]);
   const [settings, setSettings] = useState(initialAdminSettings);
+  const [notifications, setNotifications] = useState([]);
 
   // Modals state
   const [assigningRecord, setAssigningRecord] = useState(null);
@@ -66,15 +72,211 @@ export default function AdminDashboard() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Staff Assignment Handler
-  const handleAssignStaffSuccess = (recordId, newStaffName) => {
-    setFeedbackRecords((prev) =>
-      prev.map((item) =>
-        item.id === recordId ? { ...item, assignedStaff: newStaffName } : item
-      )
-    );
+  // Fetch real MySQL data for feedback, staff roster, settings, and profile
+  const fetchAdminData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/admin/login');
+        return;
+      }
+
+      // 0. Fetch Current User Profile
+      const profileRes = await fetch('http://localhost:5000/api/auth/profile', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (profileRes.ok) {
+        const userData = await profileRes.json();
+        setProfile((prev) => ({
+          ...prev,
+          name: userData.name || prev.name,
+          email: userData.email || prev.email,
+          adminId: userData.user_id_code || prev.adminId,
+          role: userData.role || prev.role,
+          phone: userData.phone || prev.phone,
+          avatarUrl: userData.avatar_url ? `http://localhost:5000${userData.avatar_url}` : prev.avatarUrl,
+        }));
+      }
+
+      // 1. Fetch All Feedback Records
+      const feedbackRes = await fetch('http://localhost:5000/api/admin/feedback', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (feedbackRes.ok) {
+        const data = await feedbackRes.json();
+        const formatted = data.map((r) => ({
+          id: r.id,
+          referenceId: r.reference_id || `FB-2026-${r.id}`,
+          visitorName: r.visitor_name || 'Anonymous Visitor',
+          department: r.department || '',
+          assignedStaff: r.assigned_staff || 'Unassigned',
+          feedbackType: r.feedback_type || '',
+          subject: r.subject || '',
+          description: r.description || '',
+          priority: r.priority || 'Medium',
+          submissionDate: r.created_at ? r.created_at.split('T')[0] : (r.incident_date ? r.incident_date.split('T')[0] : ''),
+          incidentDate: r.incident_date ? r.incident_date.split('T')[0] : '',
+          daysPending: r.days_pending || 0,
+          status: r.status || 'Open',
+          escalationStatus: r.escalation_status || 'Normal',
+          declineReason: r.decline_reason || null,
+          image: r.image_url ? (r.image_url.startsWith('http') ? r.image_url : `http://localhost:5000${r.image_url}`) : null,
+          createdAt: r.created_at,
+          updatedAt: r.updated_at,
+        }));
+        setFeedbackRecords(formatted);
+      }
+
+      // 2. Fetch Staff Roster
+      const staffRes = await fetch('http://localhost:5000/api/admin/staff-roster', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (staffRes.ok) {
+        const staffData = await staffRes.json();
+        setStaffList(staffData);
+      }
+
+      // 3. Fetch Settings
+      const settingsRes = await fetch('http://localhost:5000/api/admin/settings', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (settingsRes.ok) {
+        const settingsData = await settingsRes.json();
+        const fetchedTheme = settingsData.theme || 'Light';
+        setSettings((prev) => ({
+          ...prev,
+          institutionName: settingsData.institution_name || prev.institutionName,
+          supportEmail: settingsData.support_email || prev.supportEmail,
+          supportPhone: settingsData.support_phone || prev.supportPhone,
+          escalationDays: settingsData.escalation_days !== undefined ? settingsData.escalation_days : prev.escalationDays,
+          enableEmailNotifications: Boolean(settingsData.enable_email_notifications),
+          enableInAppNotifications: Boolean(settingsData.enable_in_app_notifications),
+          enableEscalationAlerts: Boolean(settingsData.enable_escalation_alerts),
+          theme: fetchedTheme,
+        }));
+        applyTheme(fetchedTheme);
+      }
+
+      // 4. Fetch Notifications
+      const notifRes = await fetch('http://localhost:5000/api/notifications', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (notifRes.ok) {
+        const notifData = await notifRes.json();
+        if (Array.isArray(notifData) && notifData.length > 0) {
+          const formattedNotifs = notifData.map((n) => ({
+            id: `notif-${n.id}`,
+            title: n.title,
+            description: n.description,
+            time: n.created_at ? new Date(n.created_at).toLocaleDateString() : 'Recently',
+            read: Boolean(n.is_read),
+            type: n.type || 'info',
+          }));
+          setNotifications(formattedNotifs);
+        }
+      }
+    } catch (err) {
+      console.error('Error loading Admin Dashboard data:', err);
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    fetchAdminData();
+  }, [fetchAdminData]);
+
+  // Apply theme when settings change
+  useEffect(() => {
+    if (settings && settings.theme) {
+      applyTheme(settings.theme);
+    }
+  }, [settings.theme]);
+
+  const handleProfileUpdated = (updatedData) => {
+    setProfile((prev) => ({
+      ...prev,
+      name: updatedData.name || prev.name,
+      email: updatedData.email || prev.email,
+      phone: updatedData.phone || prev.phone,
+      avatarUrl: updatedData.avatarUrl !== undefined ? updatedData.avatarUrl : (updatedData.avatar_url ? `http://localhost:5000${updatedData.avatar_url}` : prev.avatarUrl),
+    }));
+    fetchAdminData();
+  };
+
+  // Enrich Staff List with dynamic counts computed from real feedback records
+  const enrichedStaffList = useMemo(() => {
+    return staffList.map((stf) => {
+      const assigned = feedbackRecords.filter((r) => r.assignedStaff === stf.staffName);
+      const pending = assigned.filter((r) => r.status === 'Open' || r.status === 'In Progress').length;
+      const resolved = assigned.filter((r) => r.status === 'Resolved').length;
+      const total = assigned.length;
+      const score = total > 0 ? `${Math.round((resolved / total) * 100)}%` : '100%';
+      return {
+        ...stf,
+        assignedCount: total,
+        pendingCount: pending,
+        resolvedCount: resolved,
+        avgResponseTime: '1.2 Days',
+        performanceScore: score,
+      };
+    });
+  }, [staffList, feedbackRecords]);
+
+  // Save Settings handler to update MySQL settings table
+  const handleSaveSettings = async (updatedSettings) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/admin/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          institutionName: updatedSettings.institutionName,
+          supportEmail: updatedSettings.supportEmail,
+          supportPhone: updatedSettings.supportPhone,
+          escalationDays: updatedSettings.escalationDays,
+          enableEmailNotifications: updatedSettings.enableEmailNotifications,
+          enableInAppNotifications: updatedSettings.enableInAppNotifications,
+          enableEscalationAlerts: updatedSettings.enableEscalationAlerts,
+          theme: updatedSettings.theme,
+        }),
+      });
+      if (res.ok) {
+        setSettings(updatedSettings);
+        applyTheme(updatedSettings.theme);
+        fetchAdminData();
+        showToast('System settings updated in MySQL database.');
+      }
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+    }
+  };
+
+  // Staff Assignment Handler (Reassignment if required)
+  const handleAssignStaffSuccess = async (recordId, newStaffName) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5000/api/admin/assign-staff/${recordId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ staffName: newStaffName }),
+      });
+      if (res.ok) {
+        setFeedbackRecords((prev) =>
+          prev.map((item) =>
+            item.id === recordId ? { ...item, assignedStaff: newStaffName } : item
+          )
+        );
+        showToast(`Staff member "${newStaffName}" assigned successfully.`);
+      }
+    } catch (err) {
+      console.error('Failed to assign staff:', err);
+    }
     setAssigningRecord(null);
-    showToast(`Staff member "${newStaffName}" assigned successfully.`);
   };
 
   // Force Close / Resolve Ticket
@@ -95,16 +297,25 @@ export default function AdminDashboard() {
     showToast(`Ticket priority elevated to HIGH.`);
   };
 
-  // Staff Account Status Toggle
-  const handleToggleStaffStatus = (staffId) => {
-    setStaffList((prev) =>
-      prev.map((s) =>
-        s.id === staffId
-          ? { ...s, status: s.status === 'Active' ? 'Inactive' : 'Active' }
-          : s
-      )
-    );
-    showToast(`Staff account status updated.`);
+  // Staff Account Status Toggle via backend API
+  const handleToggleStaffStatus = async (staffId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5000/api/admin/toggle-staff/${staffId}`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const updatedUser = await res.json();
+        setStaffList((prev) =>
+          prev.map((s) => (s.id === staffId ? { ...s, status: updatedUser.status } : s))
+        );
+        showToast(`Staff account status updated to ${updatedUser.status}.`);
+      }
+    } catch (err) {
+      console.error('Failed to toggle staff status:', err);
+      showToast('Failed to toggle staff status.');
+    }
   };
 
   // Reset Staff Password simulation
@@ -119,24 +330,11 @@ export default function AdminDashboard() {
 
   // Handle New Staff Account Created by Admin
   const handleStaffCreated = (newStaff) => {
-    const formattedStaff = {
-      id: newStaff.id,
-      staffName: newStaff.staffName,
-      staffId: newStaff.staffId,
-      department: newStaff.department,
-      assignedCount: 0,
-      pendingCount: 0,
-      resolvedCount: 0,
-      avgResponseTime: '0 hrs',
-      performanceScore: '100%',
-      status: newStaff.status || 'Active',
-      email: newStaff.email,
-    };
-    setStaffList((prev) => [formattedStaff, ...prev]);
-    showToast(`Account created successfully for ${newStaff.staffName} (${newStaff.role}).`);
+    fetchAdminData();
+    showToast(`Account created successfully for ${newStaff.staffName || newStaff.name} (${newStaff.role || 'Staff'}).`);
   };
 
-  // Computed Dynamic Stats
+  // Computed Dynamic Stats directly from real MySQL feedbackRecords and staffList
   const computedStats = {
     totalFeedback: feedbackRecords.length,
     openFeedback: feedbackRecords.filter((r) => r.status === 'Open').length,
@@ -147,9 +345,9 @@ export default function AdminDashboard() {
       (r) => r.escalationStatus === 'Escalated' || r.status === 'Escalated to Administrator'
     ).length,
     departments: settings.categories.length,
-    registeredVisitors: stats.registeredVisitors,
+    registeredVisitors: Array.from(new Set(feedbackRecords.map((r) => r.visitorName))).length || 0,
     activeStaff: staffList.filter((s) => s.status === 'Active').length,
-    avgResolutionTime: stats.avgResolutionTime,
+    avgResolutionTime: '1.2 Days',
   };
 
   // Escalated Records List
@@ -317,7 +515,7 @@ export default function AdminDashboard() {
           {/* Staff Management Section */}
           <section id="staff-management" className="pt-2">
             <StaffManagementTable
-              staffList={staffList}
+              staffList={enrichedStaffList}
               onToggleStaffStatus={handleToggleStaffStatus}
               onResetPassword={handleResetStaffPassword}
               onStaffCreated={handleStaffCreated}
@@ -336,7 +534,10 @@ export default function AdminDashboard() {
 
           {/* Analytics Charts Section */}
           <section id="analytics" className="pt-2">
-            <AnalyticsCharts />
+            <AnalyticsCharts
+              feedbackRecords={feedbackRecords}
+              staffList={staffList}
+            />
           </section>
 
           {/* Reports Section */}
@@ -344,6 +545,7 @@ export default function AdminDashboard() {
             <ReportsSection
               feedbackRecords={feedbackRecords}
               adminProfile={profile}
+              settings={settings}
             />
           </section>
 
@@ -351,10 +553,7 @@ export default function AdminDashboard() {
           <section id="settings" className="pt-2">
             <SettingsPanel
               settings={settings}
-              onSaveSettings={(updatedSettings) => {
-                setSettings(updatedSettings);
-                showToast("System settings updated.");
-              }}
+              onSaveSettings={handleSaveSettings}
             />
           </section>
 
@@ -368,7 +567,10 @@ export default function AdminDashboard() {
 
           {/* Admin Profile Card */}
           <section id="profile" className="pt-2 pb-8">
-            <AdminProfileCard profile={profile} />
+            <AdminProfileCard
+              profile={profile}
+              onProfileUpdated={handleProfileUpdated}
+            />
           </section>
 
         </main>

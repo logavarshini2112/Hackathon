@@ -1,7 +1,98 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 }
+
+/* Dark mode comprehensive styles */
+.dark,
+html.dark,
+body.dark {
+  color-scheme: dark !important;
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+/* Background overrides */
+.dark .bg-slate-50,
+.dark main.bg-slate-50,
+.dark section.bg-slate-50,
+.dark header.bg-slate-50,
+.dark div.bg-slate-50 {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+}
+
+.dark .bg-white,
+.dark div.bg-white,
+.dark section.bg-white,
+.dark header.bg-white,
+.dark nav.bg-white,
+.dark aside.bg-white,
+.dark footer.bg-white,
+.dark main.bg-white,
+.dark table.bg-white,
+.dark tbody.bg-white {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+}
+
+.dark .bg-slate-100,
+.dark div.bg-slate-100,
+.dark tr.bg-slate-100,
+.dark th.bg-slate-100,
+.dark .bg-slate-100\/80 {
+  background-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+/* Text color overrides */
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: #f8fafc !important;
+}
+
+.dark .text-slate-700,
+.dark .text-slate-600 {
+  color: #cbd5e1 !important;
+}
+
+.dark .text-slate-500,
+.dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+/* Border overrides */
+.dark .border-slate-200,
+.dark .border-slate-100,
+.dark .border-slate-200\/80,
+.dark div.border,
+.dark section.border,
+.dark table.border {
+  border-color: #334155 !important;
+}
+
+/* Form input overrides */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #0f172a !important;
+  color: #f8fafc !important;
+  border-color: #475569 !important;
+}
+
+.dark table th {
+  background-color: #1e293b !important;
+  color: #cbd5e1 !important;
+}
+
+.dark table td {
+  border-color: #334155 !important;
+}
+
+

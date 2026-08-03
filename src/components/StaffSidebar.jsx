@@ -3,7 +3,6 @@ import {
   LayoutDashboard, 
   ClipboardList, 
   RefreshCw, 
-  FileSpreadsheet, 
   Bell, 
   User, 
   LogOut, 
@@ -16,7 +15,6 @@ export default function StaffSidebar({ activeSection, setActiveSection, onLogout
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'assigned-feedback', label: 'Assigned Feedback', icon: ClipboardList },
     { id: 'update-status-section', label: 'Update Status', icon: RefreshCw },
-    { id: 'reports', label: 'Reports', icon: FileSpreadsheet },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'profile', label: 'Profile', icon: User },
   ];

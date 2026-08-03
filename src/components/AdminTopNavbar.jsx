@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, Search, Bell, User, LogOut, ChevronDown } from 'lucide-react';
+import { Menu, Bell, User, LogOut, ChevronDown } from 'lucide-react';
 
 export default function AdminTopNavbar({ profile, unreadCount, onNotificationClick, onProfileClick, onLogoutClick, setIsMobileOpen }) {
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -24,20 +24,6 @@ export default function AdminTopNavbar({ profile, unreadCount, onNotificationCli
           <span className="text-xs text-slate-500 hidden sm:inline">
             System Administration &amp; Operations Governance
           </span>
-        </div>
-      </div>
-
-      {/* Center: Global Search Input */}
-      <div className="hidden md:flex items-center flex-1 max-w-md mx-8">
-        <div className="relative w-full">
-          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-            <Search className="w-4 h-4" />
-          </div>
-          <input
-            type="text"
-            placeholder="Global search feedback, staff, departments, tickets..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-100/80 border border-slate-200/80 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
-          />
         </div>
       </div>
 

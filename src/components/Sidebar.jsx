@@ -4,7 +4,6 @@ import {
   PlusCircle, 
   ListFilter, 
   Bell, 
-  User, 
   LogOut, 
   MessageSquarePlus,
   X
@@ -16,7 +15,6 @@ export default function Sidebar({ activeSection, setActiveSection, onLogoutClick
     { id: 'submit-feedback', label: 'Submit Feedback', icon: PlusCircle },
     { id: 'my-feedback', label: 'My Feedback', icon: ListFilter },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'profile', label: 'Profile', icon: User },
   ];
 
   const handleNavClick = (sectionId) => {

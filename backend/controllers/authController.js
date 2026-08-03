@@ -120,3 +120,93 @@ export async function getUserProfile(req, res) {
     res.status(500).json({ message: error.message || 'Internal Server Error' });
   }
 }
+
+/**
+ * @desc    Update current user profile
+ * @route   PUT /api/auth/profile
+ * @access  Private
+ */
+export async function updateUserProfile(req, res) {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    const { name, phone, email } = req.body;
+
+    if (email) {
+      const formattedEmail = email.trim().toLowerCase();
+      const existingUser = await UserModel.findByEmail(formattedEmail);
+      if (existingUser && existingUser.id !== req.user.id) {
+        return res.status(400).json({ message: 'Email address is already in use by another user' });
+      }
+    }
+
+    const updatedUser = await UserModel.updateProfile(req.user.id, { name, phone, email });
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Internal Server Error' });
+  }
+}
+
+/**
+ * @desc    Change user password
+ * @route   PUT /api/auth/change-password
+ * @access  Private
+ */
+export async function changeUserPassword(req, res) {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: 'Current password, new password, and confirmation are required' });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: 'New password and confirm password do not match' });
+    }
+
+    const fullUser = await UserModel.findByEmail(req.user.email || '');
+    const userToVerify = fullUser || (await UserModel.findById(req.user.id));
+
+    // Get hashed password from DB
+    const dbUser = await UserModel.findByEmail(userToVerify.email);
+    const isMatch = await UserModel.comparePassword(currentPassword, dbUser.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Current password is incorrect' });
+    }
+
+    await UserModel.updatePassword(req.user.id, newPassword);
+    res.status(200).json({ message: 'Password updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Internal Server Error' });
+  }
+}
+
+/**
+ * @desc    Upload profile photo
+ * @route   POST /api/auth/profile-photo
+ * @access  Private
+ */
+export async function uploadUserProfilePhoto(req, res) {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'Please upload an image file' });
+    }
+
+    const avatarUrl = `/uploads/${req.file.filename}`;
+    const updatedUser = await UserModel.updateAvatar(req.user.id, avatarUrl);
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Internal Server Error' });
+  }
+}
+

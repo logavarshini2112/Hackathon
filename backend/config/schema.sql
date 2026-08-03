@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `role` ENUM('Visitor', 'Staff', 'Administrator') NOT NULL DEFAULT 'Visitor',
   `department` VARCHAR(100) DEFAULT NULL,
   `phone` VARCHAR(30) DEFAULT NULL,
+  `avatar_url` VARCHAR(255) DEFAULT NULL,
   `status` ENUM('Active', 'Inactive') NOT NULL DEFAULT 'Active',
   `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

@@ -7,6 +7,7 @@ import authRoutes from './routes/authRoutes.js';
 import feedbackRoutes from './routes/feedbackRoutes.js';
 import staffRoutes from './routes/staffRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import notificationRoutes from './routes/notificationRoutes.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve Uploads Directory statically
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Root Health Endpoint
@@ -37,6 +39,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);

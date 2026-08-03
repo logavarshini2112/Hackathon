@@ -15,10 +15,8 @@ import {
 import Sidebar from '../../components/Sidebar';
 import TopNavbar from '../../components/TopNavbar';
 import DashboardCard from '../../components/DashboardCard';
-import UserProfileCard from '../../components/UserProfileCard';
 import FeedbackCard from '../../components/FeedbackCard';
 import FeedbackTable from '../../components/FeedbackTable';
-import StatusTimeline from '../../components/StatusTimeline';
 import NotificationCard from '../../components/NotificationCard';
 import FeedbackForm from '../../components/FeedbackForm';
 
@@ -158,7 +156,6 @@ export default function VisitorDashboard() {
           profile={profile}
           unreadCount={unreadNotifCount}
           onNotificationClick={() => scrollToSection('notifications')}
-          onProfileClick={() => scrollToSection('profile')}
           onLogoutClick={() => setIsLogoutModalOpen(true)}
           setIsMobileOpen={setIsMobileOpen}
         />
@@ -253,22 +250,12 @@ export default function VisitorDashboard() {
             />
           </section>
 
-          {/* SECTION 3: Status Timeline Standalone Section */}
-          <section id="timeline" className="pt-2">
-            <StatusTimeline currentStatus="In Progress" />
-          </section>
-
-          {/* SECTION 4: Notifications Panel */}
-          <section id="notifications" className="pt-2">
+          {/* SECTION 3: Notifications Panel */}
+          <section id="notifications" className="pt-2 pb-8">
             <NotificationCard
               notifications={notifications}
               onMarkAllRead={handleMarkAllRead}
             />
-          </section>
-
-          {/* SECTION 5: Visitor Profile */}
-          <section id="profile" className="pt-2 pb-8">
-            <UserProfileCard profile={profile} />
           </section>
 
         </main>

@@ -7,14 +7,9 @@ import {
   CheckCircle2, 
   XCircle, 
   Flame, 
-  FileSpreadsheet, 
-  FileText, 
-  Download, 
-  Printer, 
   Sparkles,
   LogOut,
-  X,
-  Info
+  X
 } from 'lucide-react';
 
 import StaffSidebar from '../../components/StaffSidebar';
@@ -69,7 +64,6 @@ export default function StaffDashboard() {
   const [inspectRecord, setInspectRecord] = useState(null);
   const [updatingRecord, setUpdatingRecord] = useState(null);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [reportsModalFeature, setReportsModalFeature] = useState(null);
 
   // Success Toast notification state
   const [toastMessage, setToastMessage] = useState(null);
@@ -79,17 +73,16 @@ export default function StaffDashboard() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  // Fetch assigned feedback records from backend API on mount
+  // Fetch assigned feedback records & notifications from backend API on mount
   useEffect(() => {
-    const fetchAssignedFeedback = async () => {
+    const fetchStaffData = async () => {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
 
+        // 1. Fetch assigned feedback
         const response = await fetch('http://localhost:5000/api/staff/assigned-feedback', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+          headers: { 'Authorization': `Bearer ${token}` }
         });
 
         if (response.ok) {
@@ -116,12 +109,31 @@ export default function StaffDashboard() {
             setAssignedFeedback(mappedRecords);
           }
         }
+
+        // 2. Fetch Notifications
+        const notifResponse = await fetch('http://localhost:5000/api/notifications', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (notifResponse.ok) {
+          const notifData = await notifResponse.json();
+          if (Array.isArray(notifData) && notifData.length > 0) {
+            const formattedNotifs = notifData.map((n) => ({
+              id: `notif-${n.id}`,
+              title: n.title,
+              description: n.description,
+              time: n.created_at ? new Date(n.created_at).toLocaleDateString() : 'Recently',
+              read: Boolean(n.is_read),
+              type: n.type || 'info',
+            }));
+            setNotifications(formattedNotifs);
+          }
+        }
       } catch (err) {
-        console.error('Error fetching assigned feedback records:', err);
+        console.error('Error fetching staff data:', err);
       }
     };
 
-    fetchAssignedFeedback();
+    fetchStaffData();
   }, []);
 
   // Status Update Handler
@@ -134,8 +146,17 @@ export default function StaffDashboard() {
   };
 
   // Mark all notifications read
-  const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const handleMarkAllRead = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      await fetch('http://localhost:5000/api/notifications/mark-read', {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   // Dynamic statistics calculations
@@ -321,78 +342,6 @@ export default function StaffDashboard() {
             </div>
           </section>
 
-          {/* Reports Section UI Cards (Coming Soon) */}
-          <section id="reports" className="pt-2">
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-sm space-y-6">
-              
-              <div className="border-b border-slate-100 pb-4">
-                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2.5">
-                  <FileSpreadsheet className="w-5 h-5 text-blue-600" />
-                  <span>Operational Reports &amp; Exports</span>
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Export operational feedback records, SLA compliance data, and department performance logs.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                
-                {/* Export PDF Card */}
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-4 text-center group hover:border-blue-300 transition-colors">
-                  <div className="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center mx-auto shadow-xs">
-                    <FileText className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 text-base">Export PDF Report</h4>
-                    <p className="text-xs text-slate-500 mt-1">Formatted summary report for executive reviews.</p>
-                  </div>
-                  <button
-                    onClick={() => setReportsModalFeature('Export PDF')}
-                    className="w-full py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
-                  >
-                    Export PDF (Coming Soon)
-                  </button>
-                </div>
-
-                {/* Export CSV Card */}
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-4 text-center group hover:border-blue-300 transition-colors">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto shadow-xs">
-                    <Download className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 text-base">Export CSV Data</h4>
-                    <p className="text-xs text-slate-500 mt-1">Raw tabular dataset for spreadsheet analysis.</p>
-                  </div>
-                  <button
-                    onClick={() => setReportsModalFeature('Export CSV')}
-                    className="w-full py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
-                  >
-                    Export CSV (Coming Soon)
-                  </button>
-                </div>
-
-                {/* Print Report Card */}
-                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-4 text-center group hover:border-blue-300 transition-colors">
-                  <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto shadow-xs">
-                    <Printer className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-900 text-base">Print Department Report</h4>
-                    <p className="text-xs text-slate-500 mt-1">Printable audit trail for physical filing.</p>
-                  </div>
-                  <button
-                    onClick={() => setReportsModalFeature('Print Report')}
-                    className="w-full py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-semibold text-xs hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
-                  >
-                    Print Report (Coming Soon)
-                  </button>
-                </div>
-
-              </div>
-
-            </div>
-          </section>
-
           {/* Notifications Panel Section */}
           <section id="notifications" className="pt-2">
             <StaffNotificationCard
@@ -434,38 +383,7 @@ export default function StaffDashboard() {
         />
       )}
 
-      {/* Reports Coming Soon Modal */}
-      {reportsModalFeature && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4 animate-fadeIn">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-100 space-y-4 text-center relative">
-            <button
-              onClick={() => setReportsModalFeature(null)}
-              className="absolute top-4 right-4 p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
 
-            <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mx-auto">
-              <Info className="w-6 h-6" />
-            </div>
-
-            <h4 className="text-lg font-bold text-slate-900">
-              {reportsModalFeature} Coming Soon
-            </h4>
-
-            <p className="text-xs text-slate-500">
-              The {reportsModalFeature} feature will be enabled in the upcoming analytics module update.
-            </p>
-
-            <button
-              onClick={() => setReportsModalFeature(null)}
-              className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-md transition-colors cursor-pointer"
-            >
-              Got it
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Logout Confirmation Modal */}
       {isLogoutModalOpen && (

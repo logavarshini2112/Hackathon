@@ -70,22 +70,32 @@ export default function FeedbackCard({ record, onClose }) {
         {/* Image Attachment Preview if present */}
         {record.image && (
           <div className="space-y-2">
-            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-              <ImageIcon className="w-4 h-4 text-blue-600" />
-              <span>Attached Proof / Media</span>
-            </h4>
-            <div className="rounded-xl overflow-hidden border border-slate-200 max-h-56">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <ImageIcon className="w-4 h-4 text-blue-600" />
+                <span>Attached Proof / Media</span>
+              </h4>
+              <a
+                href={record.image}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 font-semibold hover:underline"
+              >
+                View Full Size &rarr;
+              </a>
+            </div>
+            <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-950/5 flex items-center justify-center p-2">
               <img
                 src={record.image}
                 alt="Attachment Preview"
-                className="w-full h-full object-cover"
+                className="max-h-96 w-full object-contain rounded-lg"
               />
             </div>
           </div>
         )}
 
         {/* Embedded Status Timeline */}
-        <StatusTimeline currentStatus={record.status} />
+        <StatusTimeline record={record} currentStatus={record.status} />
 
         {/* Close Action */}
         <div className="pt-2">

@@ -8,9 +8,9 @@ export default function ImageUpload({ imageFile, setImageFile, imageError, setIm
     if (!file) return;
 
     // Allowed extensions
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-      setImageError('Only JPG, JPEG, and PNG image files are supported.');
+      setImageError('Only JPG, JPEG, PNG, and WEBP image files are supported.');
       return;
     }
 
@@ -65,7 +65,7 @@ export default function ImageUpload({ imageFile, setImageFile, imageError, setIm
         type="file"
         ref={fileInputRef}
         onChange={(e) => handleFileChange(e.target.files[0])}
-        accept="image/jpeg, image/jpg, image/png"
+        accept="image/jpeg, image/jpg, image/png, image/webp"
         className="hidden"
       />
 
@@ -112,7 +112,7 @@ export default function ImageUpload({ imageFile, setImageFile, imageError, setIm
           </p>
 
           <p className="text-xs text-slate-500">
-            Supported: JPG, JPEG, PNG (Max: 5 MB)
+            Supported: JPG, JPEG, PNG, WEBP (Max: 5 MB)
           </p>
         </div>
       )}

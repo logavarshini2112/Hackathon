@@ -1,39 +1,95 @@
-import React from 'react';
-import { BarChart3, TrendingUp, PieChart, Clock, Award, Star } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { BarChart3, TrendingUp, PieChart, Clock, Award } from 'lucide-react';
 
-export default function AnalyticsCharts() {
-  const deptData = [
-    { name: 'Maintenance', count: 8, percentage: 33 },
-    { name: 'IT Support', count: 4, percentage: 17 },
-    { name: 'Transport', count: 3, percentage: 13 },
-    { name: 'Security', count: 3, percentage: 13 },
-    { name: 'Cafeteria', count: 2, percentage: 8 },
-    { name: 'Accounts', count: 2, percentage: 8 },
-    { name: 'Library', count: 2, percentage: 8 },
-  ];
+export default function AnalyticsCharts({ feedbackRecords = [], staffList = [] }) {
+  // 1. Dynamic Department Distribution from real MySQL feedback records
+  const deptData = useMemo(() => {
+    const counts = {};
+    const total = feedbackRecords.length;
+    
+    feedbackRecords.forEach((r) => {
+      if (r.department) {
+        counts[r.department] = (counts[r.department] || 0) + 1;
+      }
+    });
 
-  const monthlyTrend = [
-    { month: 'Feb', tickets: 12 },
-    { month: 'Mar', tickets: 18 },
-    { month: 'Apr', tickets: 15 },
-    { month: 'May', tickets: 22 },
-    { month: 'Jun', tickets: 19 },
-    { month: 'Jul', tickets: 24 },
-  ];
+    return Object.entries(counts)
+      .map(([name, count]) => ({
+        name,
+        count,
+        percentage: total > 0 ? Math.round((count / total) * 100) : 0,
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [feedbackRecords]);
 
-  const statusDist = [
-    { label: 'Open', count: 6, color: 'bg-blue-600', text: 'text-blue-600' },
-    { label: 'In Progress', count: 5, color: 'bg-amber-500', text: 'text-amber-600' },
-    { label: 'Resolved', count: 10, color: 'bg-emerald-500', text: 'text-emerald-600' },
-    { label: 'Declined', count: 3, color: 'bg-red-500', text: 'text-red-600' },
-    { label: 'Escalated', count: 4, color: 'bg-rose-700', text: 'text-rose-700' },
-  ];
+  // 2. Dynamic Monthly Trend from real MySQL feedback submission dates
+  const monthlyTrend = useMemo(() => {
+    const monthsMap = {};
+    feedbackRecords.forEach((r) => {
+      if (r.submissionDate) {
+        const d = new Date(r.submissionDate);
+        if (!isNaN(d.getTime())) {
+          const monthName = d.toLocaleString('en-US', { month: 'short' });
+          monthsMap[monthName] = (monthsMap[monthName] || 0) + 1;
+        }
+      }
+    });
 
-  const topStaff = [
-    { name: 'Sarah Jenkins', dept: 'Maintenance', score: '98%', resolved: 14 },
-    { name: 'Michael Chang', dept: 'IT Support', score: '96%', resolved: 11 },
-    { name: 'David Miller', dept: 'Security', score: '95%', resolved: 9 },
-  ];
+    // Default order or extracted order
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const activeMonths = monthNames.filter((m) => monthsMap[m] !== undefined);
+    
+    if (activeMonths.length === 0) {
+      const currentMonth = new Date().toLocaleString('en-US', { month: 'short' });
+      return [{ month: currentMonth, tickets: feedbackRecords.length }];
+    }
+
+    return activeMonths.map((month) => ({
+      month,
+      tickets: monthsMap[month] || 0,
+    }));
+  }, [feedbackRecords]);
+
+  // 3. Dynamic Status Breakdown from real MySQL feedback records
+  const statusDist = useMemo(() => {
+    const openCount = feedbackRecords.filter((r) => r.status === 'Open').length;
+    const inProgressCount = feedbackRecords.filter((r) => r.status === 'In Progress').length;
+    const resolvedCount = feedbackRecords.filter((r) => r.status === 'Resolved').length;
+    const declinedCount = feedbackRecords.filter((r) => r.status === 'Declined').length;
+    const escalatedCount = feedbackRecords.filter(
+      (r) => r.escalationStatus === 'Escalated' || r.status === 'Escalated to Administrator'
+    ).length;
+
+    return [
+      { label: 'Open', count: openCount, color: 'bg-blue-600', text: 'text-blue-600' },
+      { label: 'In Progress', count: inProgressCount, color: 'bg-amber-500', text: 'text-amber-600' },
+      { label: 'Resolved', count: resolvedCount, color: 'bg-emerald-500', text: 'text-emerald-600' },
+      { label: 'Declined', count: declinedCount, color: 'bg-red-500', text: 'text-red-600' },
+      { label: 'Escalated', count: escalatedCount, color: 'bg-rose-700', text: 'text-rose-700' },
+    ];
+  }, [feedbackRecords]);
+
+  // 4. Dynamic Top Staff Performers from real MySQL staff & feedback data
+  const topStaff = useMemo(() => {
+    return staffList
+      .map((stf) => {
+        const assigned = feedbackRecords.filter((r) => r.assignedStaff === stf.staffName);
+        const resolved = assigned.filter((r) => r.status === 'Resolved').length;
+        const total = assigned.length;
+        const scoreVal = total > 0 ? Math.round((resolved / total) * 100) : 100;
+        return {
+          name: stf.staffName || stf.name,
+          dept: stf.department,
+          resolved,
+          scoreVal,
+          score: `${scoreVal}%`,
+        };
+      })
+      .sort((a, b) => b.resolved - a.resolved || b.scoreVal - a.scoreVal)
+      .slice(0, 5);
+  }, [staffList, feedbackRecords]);
+
+  const maxMonthlyTickets = Math.max(...monthlyTrend.map((m) => m.tickets), 1);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-sm space-y-8">
@@ -45,7 +101,7 @@ export default function AnalyticsCharts() {
           <span>System Analytics &amp; Performance Metrics</span>
         </h2>
         <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-          Visual insights into department feedback loads, resolution speed trends, and top performers.
+          Real-time database metrics detailing feedback distribution, status breakdown, and top performers.
         </p>
       </div>
 
@@ -60,20 +116,24 @@ export default function AnalyticsCharts() {
           </h3>
 
           <div className="space-y-3 pt-2">
-            {deptData.map((d) => (
-              <div key={d.name} className="space-y-1">
-                <div className="flex justify-between text-xs font-semibold text-slate-700">
-                  <span>{d.name}</span>
-                  <span>{d.count} tickets ({d.percentage}%)</span>
+            {deptData.length > 0 ? (
+              deptData.map((d) => (
+                <div key={d.name} className="space-y-1">
+                  <div className="flex justify-between text-xs font-semibold text-slate-700">
+                    <span>{d.name}</span>
+                    <span>{d.count} tickets ({d.percentage}%)</span>
+                  </div>
+                  <div className="w-full h-2.5 rounded-full bg-slate-200 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-blue-600 transition-all duration-500"
+                      style={{ width: `${Math.min(d.percentage, 100)}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="w-full h-2.5 rounded-full bg-slate-200 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-blue-600 transition-all duration-500"
-                    style={{ width: `${d.percentage * 2.5}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-xs text-slate-500 py-4 text-center">No feedback records logged yet.</p>
+            )}
           </div>
         </div>
 
@@ -90,7 +150,7 @@ export default function AnalyticsCharts() {
                 <span className="text-[10px] font-bold text-blue-600">{m.tickets}</span>
                 <div
                   className="w-full rounded-t-lg bg-gradient-to-t from-blue-600 to-indigo-500 transition-all duration-500 hover:opacity-90"
-                  style={{ height: `${(m.tickets / 25) * 100}%` }}
+                  style={{ height: `${Math.max((m.tickets / maxMonthlyTickets) * 100, 10)}%` }}
                 />
                 <span className="text-[11px] font-semibold text-slate-600">{m.month}</span>
               </div>
@@ -128,20 +188,24 @@ export default function AnalyticsCharts() {
           </h3>
 
           <div className="space-y-3 pt-1">
-            {topStaff.map((stf, idx) => (
-              <div key={stf.name} className="p-3 rounded-xl bg-white border border-slate-200 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-amber-100 text-amber-700 font-bold text-xs flex items-center justify-center">
-                    #{idx + 1}
+            {topStaff.length > 0 ? (
+              topStaff.map((stf, idx) => (
+                <div key={stf.name} className="p-3 rounded-xl bg-white border border-slate-200 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-amber-100 text-amber-700 font-bold text-xs flex items-center justify-center">
+                      #{idx + 1}
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900">{stf.name}</p>
+                      <p className="text-[10px] text-slate-500">{stf.dept}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-bold text-slate-900">{stf.name}</p>
-                    <p className="text-[10px] text-slate-500">{stf.dept}</p>
-                  </div>
+                  <span className="text-xs font-bold text-blue-600">{stf.score}</span>
                 </div>
-                <span className="text-xs font-bold text-blue-600">{stf.score}</span>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-xs text-slate-500 text-center py-2">No staff performance data available.</p>
+            )}
           </div>
         </div>
 

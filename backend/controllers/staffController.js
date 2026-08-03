@@ -1,4 +1,5 @@
 import FeedbackModel from '../models/Feedback.js';
+import { processSlaEngine } from '../utils/slaEngine.js';
 
 /**
  * @desc    Get assigned feedback for staff member
@@ -10,6 +11,9 @@ export async function getAssignedFeedback(req, res) {
     if (!req.user || !req.user.name) {
       return res.status(401).json({ message: 'Not authorized, staff profile missing' });
     }
+
+    // Process SLA Engine rules before fetching
+    await processSlaEngine();
 
     const records = await FeedbackModel.findByAssignedStaff(req.user.name);
     res.json(records);

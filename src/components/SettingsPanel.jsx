@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Settings, Save, Plus, Trash2, CheckCircle2, Shield, Bell, Sliders, Sun, Moon, Laptop } from 'lucide-react';
 
+import { applyTheme } from '../utils/theme';
+
 export default function SettingsPanel({ settings, onSaveSettings }) {
   const [formData, setFormData] = useState(settings);
   const [newCategory, setNewCategory] = useState('');
@@ -238,7 +240,10 @@ export default function SettingsPanel({ settings, onSaveSettings }) {
               <button
                 type="button"
                 key={t}
-                onClick={() => setFormData({ ...formData, theme: t })}
+                onClick={() => {
+                  setFormData({ ...formData, theme: t });
+                  applyTheme(t);
+                }}
                 className={`py-3 px-4 rounded-xl border text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer ${
                   formData.theme === t
                     ? 'bg-blue-600 text-white border-blue-600 shadow-md'

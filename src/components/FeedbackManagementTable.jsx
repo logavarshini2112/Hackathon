@@ -306,16 +306,6 @@ export default function FeedbackManagementTable({ records, onViewDetails, onAssi
                       >
                         <UserPlus className="w-3.5 h-3.5" />
                       </button>
-
-                      {item.status !== 'Resolved' && (
-                        <button
-                          onClick={() => onCloseFeedback(item.id)}
-                          className="p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-600 transition-colors"
-                          title="Force Close / Mark Resolved"
-                        >
-                          <CheckCircle className="w-3.5 h-3.5" />
-                        </button>
-                      )}
                     </div>
                   </td>
                 </tr>

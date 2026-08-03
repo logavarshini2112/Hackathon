@@ -4,7 +4,10 @@ import {
   assignStaffAdmin, 
   getStaffRosterAdmin, 
   toggleStaffStatusAdmin,
-  createStaffAdmin
+  createStaffAdmin,
+  getSettingsAdmin,
+  updateSettingsAdmin,
+  getAnalyticsAdmin
 } from '../controllers/adminController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
@@ -17,5 +20,8 @@ router.put('/assign-staff/:id', assignStaffAdmin);
 router.get('/staff-roster', getStaffRosterAdmin);
 router.put('/toggle-staff/:id', toggleStaffStatusAdmin);
 router.post('/create-staff', createStaffAdmin);
+router.get('/settings', getSettingsAdmin);
+router.put('/settings', updateSettingsAdmin);
+router.get('/analytics', getAnalyticsAdmin);
 
 export default router;

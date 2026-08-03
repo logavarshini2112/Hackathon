@@ -1,5 +1,7 @@
 import FeedbackModel from '../models/Feedback.js';
 import UserModel from '../models/User.js';
+import SettingsModel from '../models/Settings.js';
+import { processSlaEngine } from '../utils/slaEngine.js';
 import pool from '../config/db.js';
 
 /**
@@ -9,6 +11,8 @@ import pool from '../config/db.js';
  */
 export async function getAllFeedbackAdmin(req, res) {
   try {
+    // Process SLA Engine rules before fetching
+    await processSlaEngine();
     const records = await FeedbackModel.getAll();
     res.json(records);
   } catch (error) {
@@ -85,7 +89,8 @@ export async function createStaffAdmin(req, res) {
       return res.status(400).json({ message: 'User with this email already exists' });
     }
 
-    const targetRole = (role === 'Administrator' || role === 'Admin') ? 'Administrator' : 'Staff';
+    // Enforce Staff role for accounts created through create-staff endpoint
+    const targetRole = 'Staff';
 
     const user = await UserModel.createUser({
       name: name.trim(),
@@ -109,4 +114,48 @@ export async function createStaffAdmin(req, res) {
     res.status(500).json({ message: error.message || 'Internal Server Error' });
   }
 }
+
+/**
+ * @desc    Get system settings
+ * @route   GET /api/admin/settings
+ * @access  Private / Administrator
+ */
+export async function getSettingsAdmin(req, res) {
+  try {
+    const settings = await SettingsModel.getSettings();
+    res.json(settings);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+/**
+ * @desc    Update system settings
+ * @route   PUT /api/admin/settings
+ * @access  Private / Administrator
+ */
+export async function updateSettingsAdmin(req, res) {
+  try {
+    const updated = await SettingsModel.updateSettings(req.body);
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
+/**
+ * @desc    Get aggregated system analytics metrics
+ * @route   GET /api/admin/analytics
+ * @access  Private / Administrator
+ */
+export async function getAnalyticsAdmin(req, res) {
+  try {
+    await processSlaEngine();
+    const analytics = await FeedbackModel.getAnalytics();
+    res.json(analytics);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}
+
 
